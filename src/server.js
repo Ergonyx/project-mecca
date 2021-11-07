@@ -7,8 +7,6 @@ const express = require('express') // For the routing/api stuff
 const app = express()
 const port = 3005
 
-const url = 'https://www.memoryexpress.com/Clearance/Store/CalSE'
-
 //
 // This scraping function will be configured to run approximately every 4 hours
 // as I don't want to overstress their webhost.  This is also why I did not
@@ -16,15 +14,27 @@ const url = 'https://www.memoryexpress.com/Clearance/Store/CalSE'
 //
 
 let scrapedJSON = [] // Temporary data storage.
+let lastUpdated // This will be the UTC time the stores were last scraped.
+const stores = ['CalNE', 'CalNW', 'CalSE', 'BBBC', 'Edm1', 'EdmW', 'ONHM', 'LYBC', 'ONLON', 'ONOTT', 'SKST', 'VBBC', 'BCVIC1', 'WpgW']
 
+
+// Just a small function for readability elsewhere.
 const getDiscount = (reg, sale) => {
     const regex = /[$,]/gm
     return Math.floor(100 - ((sale.replace(regex,'') / reg.replace(regex,'')) * 100))
 }
 
-const scrapeIt = () => {
+const fullSendScraper = (stores) => {
+    scrapedJSON.length = 0 // Reset the "database"
+    lastUpdated = new Date().getTime() // UTC data was last updated.
+    stores.forEach(lmnt => {
+        scrapeIt(lmnt)
+    });
+}
+
+const scrapeIt = (store) => {
     const startTime = new Date().getTime()
-    axios(url) // Open connection and get some data baby! OM NOM NOM!
+    axios(`https://www.memoryexpress.com/Clearance/Store/${store}`) // Open connection and get some data baby! OM NOM NOM!
         .then(res => { // Let's see what our response is...
             if (res.status === 200) { // 200 = OK!
                 const html = res.data // Get my raw HTML
@@ -42,6 +52,7 @@ const scrapeIt = () => {
                         const salePrice = $(this).find('.c-clli-item-price__sale-value').text().trim()
                         const discount = getDiscount(regularPrice, salePrice)
                         scrapedJSON.push({
+                            store,
                             category,
                             title,
                             url,
@@ -53,18 +64,17 @@ const scrapeIt = () => {
                         })
                     })
                 })
-                
-                console.log(scrapedJSON)
             }
         }).then(() => {
             const endTime = new Date().getTime()
-            console.log('Time to complete: ' + (endTime - startTime) / 1000 + 's')
+            console.log(`(${store}) Time to complete: ${(endTime - startTime) / 1000}s (${scrapedJSON.length} items)`)
+        }).catch(function (error) {
+            console.log(`Error Code: ${error.response.status}`)
         })
 }
 
-scrapeIt()
-
-
+// scrapeIt('CalNEW')
+fullSendScraper(stores)
 
 // Configure ExpressJS to listen for incoming connections.
 app.listen(port, () => {
