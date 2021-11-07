@@ -1,0 +1,26 @@
+{
+  "name": "project-mecca",
+  "version": "1.0.0",
+  "description": "A small application design to aggregate data from all the MemEx Clearance Centers.",
+  "main": "src/server.js",
+  "dependencies": {
+    "axios": "^0.24.0",
+    "cheerio": "^1.0.0-rc.10",
+    "express": "^4.17.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon src/server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ergonyx/project-mecca.git"
+  },
+  "author": "Alex Richardson",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Ergonyx/project-mecca/issues"
+  },
+  "homepage": "https://github.com/Ergonyx/project-mecca#readme"
+}

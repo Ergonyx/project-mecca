@@ -1,1 +1,1 @@
-project-mecca
+Project MECCA
