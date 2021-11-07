@@ -14,7 +14,8 @@ const port = 3005
 //
 
 let scrapedJSON = [] // Temporary data storage.
-let lastUpdated // This will be the UTC time the stores were last scraped.
+let lastUpdated = 1635746400000// This will be the UTC time the stores were last scraped.
+let nextUpdate = 1635760800000
 const stores = ['CalNE', 'CalNW', 'CalSE', 'BBBC', 'Edm1', 'EdmW', 'ONHM', 'LYBC', 'ONLON', 'ONOTT', 'SKST', 'VBBC', 'BCVIC1', 'WpgW']
 
 
@@ -25,11 +26,19 @@ const getDiscount = (reg, sale) => {
 }
 
 const fullSendScraper = (stores) => {
-    scrapedJSON.length = 0 // Reset the "database"
-    lastUpdated = new Date().getTime() // UTC data was last updated.
-    stores.forEach(lmnt => {
-        scrapeIt(lmnt)
-    });
+    console.log('Checking if update is needed.')
+    if (new Date().getTime() >= lastUpdated) {
+        console.log('Updated required.  Begin scraping.')
+        // Here we'll clear the existing array and build it with new data.
+        scrapedJSON.length = 0 // Reset the "database"
+        lastUpdated = new Date().getTime() // UTC data was last updated.
+        stores.forEach(lmnt => {
+            scrapeIt(lmnt)
+        });
+        nextUpdate = lastUpdated + 14400000 // Set time for next update.
+    } else {
+        console.log('No update required.  Serving data.')
+    }
 }
 
 const scrapeIt = (store) => {
