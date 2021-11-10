@@ -1,6 +1,5 @@
 const wrapper = document.getElementById('wrapper')
 
-// fetch('http://localhost:80/mecca')
 fetch('https://www.alexrichardson.tech/mecca', )
     .then(response => response.json())
     .then(data => {
@@ -27,7 +26,5 @@ fetch('https://www.alexrichardson.tech/mecca', )
             `
             category.insertAdjacentHTML("beforeend", item)
         })
-
-        console.log(categories)
         console.log(data)
     })
