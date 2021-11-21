@@ -2,36 +2,72 @@ const axios = require('axios'); // For the request to scrape
 const cheerio = require('cheerio'); // For the DOM manipulation
 const express = require('express'); // For the routing/api stuff
 const app = express();
-/*
-CORS for testing on local development configuration.
-const cors = require('cors')
-app.use(cors())
-*/
+
+//CORS for testing on local development configuration.
+// const cors = require('cors')
+// app.use(cors())
+
+// Some general settings.
 const port = 80;
+const stats = {
+    visits: 0,
+    lastUpdated: 0
+};
 
 // Do Express Routing
 app.get('/mecca', (req, res) => {
-    // Do things to build the HTML I will need.
-    // To start this will only grab the data for the 3 calgary stores.
     const yyc = [];
     scrapedJSON.forEach(lmnt => {
         if (lmnt.store === 'CalNE' || lmnt.store === 'CalNW' || lmnt.store === 'CalSE') {
             yyc.push(lmnt);
         }
     });
-    res.json(yyc);
+    stats.visits++
+    stats.lastUpdated = new Date(lastUpdated)
+    addLogEntry(req)
+
+    res.send({yyc,stats});
 });
+
+// Edmonton Location
+app.get('/mecca/yeg', (req, res) => {
+    const yeg = [];
+    scrapedJSON.forEach(lmnt => {
+        if (lmnt.store === 'Edm1' || lmnt.store === 'EdmW') {
+            yeg.push(lmnt);
+        }
+    });
+    addLogEntry(req)
+    res.json(yeg);
+});
+
+// Just messin around with some things here.
+app.get('/mecca/categories', (req, res) => {
+    const categories = []
+    scrapedJSON.forEach(lmnt => {
+        if (categories.indexOf(lmnt.category) < 0) {
+            categories.push(lmnt.category)
+        }
+    });
+    res.json(categories)
+})
+
+// Get log data.  Totally not secure but nothing worth stealing as IP is always 127.0.0.1
+app.get('/cmdrlog', (req, res) => {
+    addLogEntry(req)
+    res.json(commandersLog)
+})
 
 //
 // This scraping function will be configured to run approximately every 4 hours
 // as I don't want to overstress their webhost.  This is also why I did not
 // include images in this aggregator.
 //
-
+let commandersLog = [] // Array for logging events and requests.
 let scrapedJSON = []; // Temporary data storage.
 let lastUpdated = 1635746400000; // This will be the UTC time the stores were last scraped.
 // const stores = ['CalNE', 'CalNW', 'CalSE', 'BBBC', 'Edm1', 'EdmW', 'ONHM', 'LYBC', 'ONLON', 'ONOTT', 'SKST', 'VBBC', 'BCVIC1', 'WpgW']
-const stores = ['CalNE', 'CalNW', 'CalSE'];
+const stores = ['CalNE', 'CalNW', 'CalSE', 'Edm1', 'EdmW'];
 
 
 // Just a small function for readability elsewhere.
@@ -40,6 +76,20 @@ const getDiscount = (reg, sale) => {
     return Math.floor(100 - ((sale.replace(regex,'') / reg.replace(regex,'')) * 100));
 };
 
+// Small function for some minor logging of visitor data.
+const addLogEntry = (req) => {
+    requestDate = new Date().getTime()
+    numberOfItems = scrapedJSON.length
+    pathname = req.path
+    commandersLog.push({
+        requestDate,
+        numberOfItems,
+        pathname
+    })
+    // console.log(commandersLog)
+}
+
+// This scrapes all stores in the array provided.
 const fullSendScraper = (stores) => {
     console.log('Checking if update is needed.');
     if (new Date().getTime() >= lastUpdated + 14400000) {
@@ -55,8 +105,9 @@ const fullSendScraper = (stores) => {
     }
 };
 
+// The individual store scraper.
 const scrapeIt = (store) => {
-    const startTime = new Date().getTime();
+    const startTime = new Date().getTime(); // Start time of function.
     axios(`https://www.memoryexpress.com/Clearance/Store/${store}`) // Open connection and get some data baby! OM NOM NOM!
         .then(res => { // Let's see what our response is...
             if (res.status === 200) { // 200 = OK!
@@ -89,14 +140,13 @@ const scrapeIt = (store) => {
                 });
             }
         }).then(() => {
-            const endTime = new Date().getTime();
-            console.log(`(${store}) Time to complete: ${(endTime - startTime) / 1000}s (${scrapedJSON.length} items)`);
+            const endTime = new Date().getTime(); // End time of function.
+            console.log(`(${store}) Time to complete: ${(endTime - startTime) / 1000}s (${scrapedJSON.length} items)`);  // Log time to complete function.
         }).catch(function (error) {
-            console.log(`Error Code: ${error.response.status}`);
+            console.log(`Error Code: ${error.response.status}`); // Error catching.
         });
 };
 
-// scrapeIt('CalNEW')
 setInterval(() => {
     fullSendScraper(stores);
 }, 600000);
