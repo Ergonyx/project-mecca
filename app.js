@@ -4,7 +4,6 @@ const header = document.getElementById('header')
 
 // Toggle visibility of individual categories when toggled in the filter list.
 const funkyTest = (category) => {
-  console.log(category)
   const lmnt = document.getElementById(category)  
   lmnt.classList.toggle('visible')
   lmnt.classList.toggle('hidden')
