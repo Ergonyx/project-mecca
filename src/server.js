@@ -2,10 +2,12 @@ const axios = require('axios'); // For the request to scrape
 const cheerio = require('cheerio'); // For the DOM manipulation
 const express = require('express'); // For the routing/api stuff
 const app = express();
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json())
 
-//CORS for testing on local development configuration.
-// const cors = require('cors')
-// app.use(cors())
+// CORS for testing on local development configuration.
+const cors = require('cors')
+app.use(cors())
 
 // Some general settings.
 const port = 80;
@@ -24,8 +26,6 @@ app.get('/mecca', (req, res) => {
     });
     stats.visits++
     stats.lastUpdated = new Date(lastUpdated)
-    addLogEntry(req)
-
     res.send({yyc,stats});
 });
 
@@ -37,25 +37,18 @@ app.get('/mecca/yeg', (req, res) => {
             yeg.push(lmnt);
         }
     });
-    addLogEntry(req)
     res.json(yeg);
 });
 
-// Just messin around with some things here.
-app.get('/mecca/categories', (req, res) => {
-    const categories = []
-    scrapedJSON.forEach(lmnt => {
-        if (categories.indexOf(lmnt.category) < 0) {
-            categories.push(lmnt.category)
-        }
-    });
-    res.json(categories)
+// Contact Page
+app.get('/contact', (req, res) => {
+    res.send("Hi.  Currently working on the contact form but you can always email me at alex(at}thisdomain[dot)ca")
 })
-
-// Get log data.  Totally not secure but nothing worth stealing as IP is always 127.0.0.1
-app.get('/cmdrlog', (req, res) => {
-    addLogEntry(req)
-    res.json(commandersLog)
+// Add contact form responses to a file for later review.
+app.post('/contact', (req, res) => {
+    let newContact = req.body
+    console.log(req.body)
+    res.send('Um.  Accepted?')
 })
 
 //
@@ -63,7 +56,6 @@ app.get('/cmdrlog', (req, res) => {
 // as I don't want to overstress their webhost.  This is also why I did not
 // include images in this aggregator.
 //
-let commandersLog = [] // Array for logging events and requests.
 let scrapedJSON = []; // Temporary data storage.
 let lastUpdated = 1635746400000; // This will be the UTC time the stores were last scraped.
 // const stores = ['CalNE', 'CalNW', 'CalSE', 'BBBC', 'Edm1', 'EdmW', 'ONHM', 'LYBC', 'ONLON', 'ONOTT', 'SKST', 'VBBC', 'BCVIC1', 'WpgW']
@@ -147,10 +139,13 @@ const scrapeIt = (store) => {
         });
 };
 
+// Run scraper every 10 minutes.
 setInterval(() => {
     fullSendScraper(stores);
 }, 600000);
-fullSendScraper(stores);
+
+// Invoke first run of 
+// fullSendScraper(stores);
 
 
 // Configure ExpressJS to listen for incoming connections.
