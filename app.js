@@ -66,12 +66,14 @@ const getStoreName = (store) => {
     .then(data => {
         const categories = []
         const items = data.yyc
+
         // Build list of categories for later use.
         items.forEach(lmnt => {
             if (categories.indexOf(lmnt.category) < 0) {
                 categories.push(lmnt.category)
             }
         });
+
         // Sort categories and create filters for each
         categories.sort().forEach(lmnt => {
             const category = `<div id="${lmnt.replace(/[\s]/gm,'')}" class="visible"><h2>${lmnt}</h2></div>`
@@ -79,6 +81,7 @@ const getStoreName = (store) => {
             const filter = `<div><input type="checkbox" onchange=funkyTest('${lmnt.replace(/[\s]/gm,'')}') checked> ${lmnt}</div>`
             filters.insertAdjacentHTML("beforeend", filter)
         })
+
         // Add all the items into their respective categories.
         items.forEach(lmnt => {
             const category = document.getElementById(lmnt.category.replace(/[\s]/gm,''))
@@ -92,6 +95,7 @@ const getStoreName = (store) => {
             `
             category.insertAdjacentHTML("beforeend", item)
         })
+        
         // Modify the header to provide any important information.
         const lastUpdated = data.stats.lastUpdated.split('T')
         const notice = `
