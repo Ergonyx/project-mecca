@@ -5,8 +5,24 @@ const header = document.getElementById('header')
 // Toggle visibility of individual categories when toggled in the filter list.
 const funkyTest = (category) => {
   const lmnt = document.getElementById(category)  
-  lmnt.classList.toggle('visible')
-  lmnt.classList.toggle('hidden')
+  lmnt.classList.toggle('is-hidden')
+}
+const hideItems = (category) => {
+  const lmnt = document.getElementById(category)
+  let items = lmnt.querySelectorAll('.itemCard')
+  items.forEach(lmnt => {
+    lmnt.classList.toggle('is-hidden')
+  })
+}
+const hideFilters = () => {
+  const filterList = document.querySelectorAll('.filterCheckbox')
+  const filterListToggle = document.getElementById('filterListToggle')
+  filterListToggle.classList.toggle('fa-plus')
+  filterListToggle.classList.toggle('fa-minus')
+  // filterListToggle.textContent === '+' ? filterListToggle.textContent = '-' : filterListToggle.textContent = '+'
+  filterList.forEach(lmnt => {
+    lmnt.classList.toggle('is-hidden')
+  })
 }
 
 // function to convert store code into a readable name.
@@ -55,7 +71,7 @@ const getStoreName = (store) => {
         return "Winnipeg West, MB"
         break;
       default:
-        return "ERROR 37..."
+        return "ERROR: Store name not found."
         break;
     }
   }
@@ -66,24 +82,35 @@ const getStoreName = (store) => {
     .then(data => {
         const categories = []
         const items = data.yyc
+
         // Build list of categories for later use.
         items.forEach(lmnt => {
             if (categories.indexOf(lmnt.category) < 0) {
                 categories.push(lmnt.category)
             }
         });
+
         // Sort categories and create filters for each
         categories.sort().forEach(lmnt => {
-            const category = `<div id="${lmnt.replace(/[\s]/gm,'')}" class="visible"><h2>${lmnt}</h2></div>`
+            const category = `
+              <div id="${lmnt.replace(/[\s]/gm,'')}" class="container categoryBorder">
+                <span class="title is-5 categoryHeader cursorPointer" onclick=hideItems('${lmnt.replace(/[\s]/gm,'')}')>${lmnt}</span>
+              </div>
+            `
             itemList.insertAdjacentHTML("beforeend", category)
-            const filter = `<div><input type="checkbox" onchange=funkyTest('${lmnt.replace(/[\s]/gm,'')}') checked> ${lmnt}</div>`
+            const filter = `
+              <div class="filterCheckbox is-hidden">
+                <input type="checkbox" onchange=funkyTest('${lmnt.replace(/[\s]/gm,'')}') checked> ${lmnt}
+              </div>
+            `
             filters.insertAdjacentHTML("beforeend", filter)
         })
+
         // Add all the items into their respective categories.
         items.forEach(lmnt => {
             const category = document.getElementById(lmnt.category.replace(/[\s]/gm,''))
             const item = `
-            <div class="itemCard ${lmnt.store}">
+            <div class="itemCard ${lmnt.store} is-hidden">
                 <div class="itemTitle">
                     ${getStoreName(lmnt.store)} - <a href="${lmnt.url}" target="_blank">${lmnt.title}</a>
                     - <s>${lmnt.regularPrice}</s> <strong>${lmnt.discount}% OFF!</strong> ONLY ${lmnt.salePrice}
@@ -92,11 +119,40 @@ const getStoreName = (store) => {
             `
             category.insertAdjacentHTML("beforeend", item)
         })
+        
         // Modify the header to provide any important information.
-        const lastUpdated = data.stats.lastUpdated.split('T')
+        const timezoneOffset = new Date().getTimezoneOffset() * 60
+        const lastUpdated = new Date(new Date(data.stats.lastUpdated).getTime() - timezoneOffset)
         const notice = `
-          <strong>Last Updated:<br>${lastUpdated[0]} at ${lastUpdated[1].replace(/.\d*Z/gm, '')} UTC</strong>
+          <strong><p class="title is-4">Last Updated:</p>${lastUpdated}</strong>
           <p>The data this page uses is only updated once every 4-6 hours. You should call to confirm any items on this list are still in stock before going to the store.</p>
         `
         header.insertAdjacentHTML("beforeend", notice)
     })
+    
+// Bulma CSS navbar burger support
+    document.addEventListener('DOMContentLoaded', () => {
+
+      // Get all "navbar-burger" elements
+      const $navbarBurgers = Array.prototype.slice.call(document.querySelectorAll('.navbar-burger'), 0);
+    
+      // Check if there are any navbar burgers
+      if ($navbarBurgers.length > 0) {
+    
+        // Add a click event on each of them
+        $navbarBurgers.forEach( el => {
+          el.addEventListener('click', () => {
+    
+            // Get the target from the "data-target" attribute
+            const target = el.dataset.target;
+            const $target = document.getElementById(target);
+    
+            // Toggle the "is-active" class on both the "navbar-burger" and the "navbar-menu"
+            el.classList.toggle('is-active');
+            $target.classList.toggle('is-active');
+    
+          });
+        });
+      }
+    
+    });
