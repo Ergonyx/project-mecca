@@ -2,15 +2,18 @@ const axios = require('axios'); // For the request to scrape
 const cheerio = require('cheerio'); // For the DOM manipulation
 const express = require('express'); // For the routing/api stuff
 const app = express();
+const creds = require('./my.credentials.json') // credentials for things.
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json())
 
 // CORS for testing on local development configuration.
-const cors = require('cors')
+const cors = require('cors');
+const { response } = require('express');
 app.use(cors())
 
 // Some general settings.
 const port = 80;
+const messages = [];
 const stats = {
     visits: 0,
     lastUpdated: 0
@@ -42,13 +45,67 @@ app.get('/mecca/yeg', (req, res) => {
 
 // Contact Page
 app.get('/contact', (req, res) => {
-    res.send("Hi.  Currently working on the contact form but you can always email me at alex(at}thisdomain[dot)ca")
+    let form = `
+        <form action="/contact" method="POST">
+            <label for="contactName">Your Name</label>
+            <input type="text" name="contactName"><br>
+            <label for="email">E-Mail</label>
+            <input type="email" name="email"><br>
+            <label for="message">Message</label>
+            <input type="textarea" name="message"><br>
+            <input type="submit">
+        </form>
+    `
+    res.send(form)
 })
 // Add contact form responses to a file for later review.
 app.post('/contact', (req, res) => {
     let newContact = req.body
-    console.log(req.body)
-    res.send('Um.  Accepted?')
+    newContact.id = messages.length
+    messages.push(newContact)
+    console.log("New Message Added!")
+    res.send("Thanks for reaching out!  Have a great day!")
+})
+// View messages
+// Render the login form.
+app.get('/messages', (req,res) => {
+    let login = `
+    <div style="display: flex;">
+        <form action="/messages" method="POST" style="margin: 25% auto; transform: scale(2);">
+            <label for="username">Username</label><br>
+            <input type="text" name="username"><br>
+            <label for="password">Password</label><br>
+            <input type="password" name="password"><br>
+            <input type="submit" value="LOGIN" style="margin: .5rem .25rem;">
+        </form>
+    </div>
+    `
+    res.send(login)
+})
+// Process login data and return messages if login is good or error if not.
+app.post('/messages', (req, res) => {
+    if (req.body.username === creds.user && req.body.password === creds.password) {
+        let messageList = '<h2>Messages Below</h2>'
+        messages.forEach(el => {
+            messageList += `<a href="mailto:${el.email}">${el.contactName}</a>: ${el.message}<br>`
+        })
+        messageList += `<a href="./messages">Back</a>`
+        res.send(messageList)
+    } else {
+        res.send(`
+        <div style="display: flex;">
+        
+        <form action="/messages" method="POST" style="margin: 25% auto; transform: scale(2);">
+        <h2 style="color: red;">Bad Login.  Try Again!</h2>
+            <label for="username">Username</label><br>
+            <input type="text" name="username"><br>
+            <label for="password">Password</label><br>
+            <input type="password" name="password"><br>
+            <input type="submit" value="LOGIN" style="margin: .5rem .25rem;">
+        </form>
+    </div>
+        `)
+    }
 })
 
 //
@@ -57,7 +114,7 @@ app.post('/contact', (req, res) => {
 // include images in this aggregator.
 //
 let scrapedJSON = []; // Temporary data storage.
-let lastUpdated = 1635746400000; // This will be the UTC time the stores were last scraped.
+let lastUpdated = 1635746400000; // This will be the UTC time the stores were last scraped. 
 // const stores = ['CalNE', 'CalNW', 'CalSE', 'BBBC', 'Edm1', 'EdmW', 'ONHM', 'LYBC', 'ONLON', 'ONOTT', 'SKST', 'VBBC', 'BCVIC1', 'WpgW']
 const stores = ['CalNE', 'CalNW', 'CalSE', 'Edm1', 'EdmW'];
 
@@ -67,19 +124,6 @@ const getDiscount = (reg, sale) => {
     const regex = /[$,]/gm;
     return Math.floor(100 - ((sale.replace(regex,'') / reg.replace(regex,'')) * 100));
 };
-
-// Small function for some minor logging of visitor data.
-const addLogEntry = (req) => {
-    requestDate = new Date().getTime()
-    numberOfItems = scrapedJSON.length
-    pathname = req.path
-    commandersLog.push({
-        requestDate,
-        numberOfItems,
-        pathname
-    })
-    // console.log(commandersLog)
-}
 
 // This scrapes all stores in the array provided.
 const fullSendScraper = (stores) => {
@@ -146,7 +190,6 @@ setInterval(() => {
 
 // Invoke first run of 
 // fullSendScraper(stores);
-
 
 // Configure ExpressJS to listen for incoming connections.
 app.listen(port, () => {
